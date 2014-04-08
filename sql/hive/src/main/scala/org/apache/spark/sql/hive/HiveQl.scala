@@ -27,6 +27,8 @@ import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.types._
+import com.intel.ssg.dcst.panthera.parse.sql.SqlParseDriver
+import com.intel.ssg.dcst.panthera.parse.ql.PantheraHiveParser
 
 /* Implicit conversions */
 import scala.collection.JavaConversions._
@@ -208,10 +210,10 @@ private[hive] object HiveQl {
   /**
    * Returns the AST for the given SQL string.
    */
-  def getAst(sql: String): ASTNode = ParseUtils.findRootNonNullToken((new ParseDriver).parse(sql))
+  def getAst(hive: HiveContext, sql: String): ASTNode = ParseUtils.findRootNonNullToken((new SqlParseDriver(hive.hiveconf)).parse(sql))
 
   /** Returns a LogicalPlan for a given HiveQL string. */
-  def parseSql(sql: String): LogicalPlan = {
+  def parseSql(hive: HiveContext, sql: String): LogicalPlan = {
     try {
       if (sql.trim.toLowerCase.startsWith("set")) {
         // Split in two parts since we treat the part before the first "="
@@ -239,7 +241,8 @@ private[hive] object HiveQl {
       } else if (sql.trim.startsWith("!")) {
         ShellCommand(sql.drop(1))
       } else {
-        val tree = getAst(sql)
+        val tree = getAst(hive, sql)
+
         if (nativeCommands contains tree.getText) {
           NativeCommand(sql)
         } else {
@@ -263,7 +266,7 @@ private[hive] object HiveQl {
     val tree =
       try {
         ParseUtils.findRootNonNullToken(
-          (new ParseDriver).parse(ddl, null /* no context required for parsing alone */))
+          (new SqlParseDriver).parse(ddl, null /* no context required for parsing alone */))
       } catch {
         case pe: org.apache.hadoop.hive.ql.parse.ParseException =>
           throw new RuntimeException(s"Failed to parse ddl: '$ddl'", pe)
@@ -859,10 +862,10 @@ private[hive] object HiveQl {
   }
 
   val numericAstTypes = Seq(
-    HiveParser.Number,
-    HiveParser.TinyintLiteral,
-    HiveParser.SmallintLiteral,
-    HiveParser.BigintLiteral)
+    PantheraHiveParser.Number,
+    PantheraHiveParser.TinyintLiteral,
+    PantheraHiveParser.SmallintLiteral,
+    PantheraHiveParser.BigintLiteral)
 
   /* Case insensitive matches */
   val COUNT = "(?i)COUNT".r
@@ -1065,7 +1068,7 @@ private[hive] object HiveQl {
         v
       }
 
-    case ast: ASTNode if ast.getType == HiveParser.StringLiteral =>
+    case ast: ASTNode if ast.getType == PantheraHiveParser.StringLiteral =>
       Literal(BaseSemanticAnalyzer.unescapeSQLString(ast.getText))
 
     case a: ASTNode =>
