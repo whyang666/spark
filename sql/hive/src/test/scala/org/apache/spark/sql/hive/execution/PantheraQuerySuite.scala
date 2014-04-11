@@ -24,12 +24,15 @@ import org.apache.spark.sql.hive.TestHive._
  */
 class PantheraQuerySuite extends HiveComparisonTest {
   createQueryTest("irregular order name 1",
-    s"""SELECT * FROM src order by src.key""")
+    """SELECT * FROM src order by src.key""")
 
   createQueryTest("Simple uncorrelated",
-    s"""SELECT key FROM src a WHERE EXISTS (SELECT * FROM src b WHERE b.key=68)""")
+    """SELECT key FROM src a WHERE EXISTS (SELECT * FROM src b WHERE b.key = 68)""")
 
   createQueryTest("Simple correlated",
-    s"""SELECT key FROM src a WHERE exists (select * from src b where a.key = b.key)""")
+    """SELECT key FROM src a WHERE exists (select * from src b where a.key = b.key)""")
+
+  createQueryTest("tt correlated",
+    """SELECT a.key FROM src a LEFT OUTER JOIN src b on a.key = b.key""")
 
 }
