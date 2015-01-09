@@ -52,6 +52,7 @@ class SqlParser extends AbstractSparkSQLParser {
   protected val CASE = Keyword("CASE")
   protected val CAST = Keyword("CAST")
   protected val COUNT = Keyword("COUNT")
+  protected val CUBE = Keyword("CUBE")
   protected val DECIMAL = Keyword("DECIMAL")
   protected val DESC = Keyword("DESC")
   protected val DISTINCT = Keyword("DISTINCT")
@@ -64,6 +65,7 @@ class SqlParser extends AbstractSparkSQLParser {
   protected val FROM = Keyword("FROM")
   protected val FULL = Keyword("FULL")
   protected val GROUP = Keyword("GROUP")
+  protected val GROUPING = Keyword("GROUPING")
   protected val HAVING = Keyword("HAVING")
   protected val IF = Keyword("IF")
   protected val IN = Keyword("IN")
@@ -90,9 +92,11 @@ class SqlParser extends AbstractSparkSQLParser {
   protected val OVERWRITE = Keyword("OVERWRITE")
   protected val REGEXP = Keyword("REGEXP")
   protected val RIGHT = Keyword("RIGHT")
+  protected val ROLLUP = Keyword("ROLLUP")
   protected val RLIKE = Keyword("RLIKE")
   protected val SELECT = Keyword("SELECT")
   protected val SEMI = Keyword("SEMI")
+  protected val SETS = Keyword("SETS")
   protected val SQRT = Keyword("SQRT")
   protected val STRING = Keyword("STRING")
   protected val SUBSTR = Keyword("SUBSTR")
@@ -106,6 +110,7 @@ class SqlParser extends AbstractSparkSQLParser {
   protected val UPPER = Keyword("UPPER")
   protected val WHEN = Keyword("WHEN")
   protected val WHERE = Keyword("WHERE")
+  protected val WITH = Keyword("WITH")
 
   // Use reflection to find the reserved words defined in this class.
   protected val reservedWords =
@@ -139,7 +144,10 @@ class SqlParser extends AbstractSparkSQLParser {
       repsep(projection, ",") ~
       (FROM   ~> relations).? ~
       (WHERE  ~> expression).? ~
-      (GROUP  ~  BY ~> rep1sep(expression, ",")).? ~
+      (GROUP  ~  BY ~> rep1sep(expression, ",") ~
+        ( GROUPING ~ SETS ~ "(" ~ rep1sep("(" ~> rep1sep(expression, ",") <~ ")", ",") ~ ")" ^^^ {}
+        | WITH ~ (ROLLUP | CUBE)).?
+        ).? ~
       (HAVING ~> expression).? ~
       sortType.? ~
       (LIMIT  ~> expression).? ^^ {
