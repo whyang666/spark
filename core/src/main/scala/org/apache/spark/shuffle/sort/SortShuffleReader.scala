@@ -81,7 +81,7 @@ private[spark] class SortShuffleReader[K, C](
   /** keyComparator for mergeSort, id keyOrdering is not available,
     * using hashcode of key to compare */
   private val keyComparator: Comparator[K] = dep.keyOrdering.getOrElse(new Comparator[K] {
-    override def compare(a: K, b: K) = {
+    override def compare(a: K, b: K): Int = {
       val h1 = if (a == null) 0 else a.hashCode()
       val h2 = if (b == null) 0 else b.hashCode()
       if (h1 < h2) -1 else if (h1 == h2) 0 else 1
