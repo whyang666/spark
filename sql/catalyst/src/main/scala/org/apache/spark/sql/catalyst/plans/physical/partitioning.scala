@@ -186,9 +186,9 @@ case class HashSortedPartitioning(expressions: Seq[Expression], numPartitions: I
   extends Expression
   with Partitioning {
 
-  override def children = expressions
-  override def nullable = false
-  override def dataType = IntegerType
+  override def children: Seq[Expression] = expressions
+  override def nullable: Boolean = false
+  override def dataType: DataType = IntegerType
 
   private[this] lazy val clusteringSet = expressions.toSet
 
@@ -201,7 +201,7 @@ case class HashSortedPartitioning(expressions: Seq[Expression], numPartitions: I
     case _ => false
   }
 
-  override def compatibleWith(other: Partitioning) = other match {
+  override def compatibleWith(other: Partitioning): Boolean = other match {
     case BroadcastPartitioning => true
     case h: HashSortedPartitioning if h == this => true
     case _ => false
