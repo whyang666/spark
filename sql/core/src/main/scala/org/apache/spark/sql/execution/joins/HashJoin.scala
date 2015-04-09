@@ -62,16 +62,19 @@ trait HashJoin {
       private[this] val joinKeys = streamSideKeyGenerator()
 
       override final def hasNext: Boolean =
-        (currentMatchPosition != -1 && currentMatchPosition < currentHashMatches.size) ||
-          (streamIter.hasNext && fetchNext())
+        (currentMatchPosition != -1 && currentMatchPosition < currentHashMatches.size) || fetchNext
 
       override final def next(): Row = {
-        val ret = buildSide match {
-          case BuildRight => joinRow(currentStreamedRow, currentHashMatches(currentMatchPosition))
-          case BuildLeft => joinRow(currentHashMatches(currentMatchPosition), currentStreamedRow)
+        if (hasNext) {
+          val ret = buildSide match {
+            case BuildRight => joinRow(currentStreamedRow, currentHashMatches(currentMatchPosition))
+            case BuildLeft => joinRow(currentHashMatches(currentMatchPosition), currentStreamedRow)
+          }
+          currentMatchPosition += 1
+          ret
+        } else {
+          null
         }
-        currentMatchPosition += 1
-        ret
       }
 
       /**
@@ -81,21 +84,25 @@ trait HashJoin {
        *         tuples.
        */
       private final def fetchNext(): Boolean = {
-        currentHashMatches = null
-        currentMatchPosition = -1
-
-        while (currentHashMatches == null && streamIter.hasNext) {
-          currentStreamedRow = streamIter.next()
-          if (!joinKeys(currentStreamedRow).anyNull) {
-            currentHashMatches = hashedRelation.get(joinKeys.currentValue)
-          }
-        }
-
-        if (currentHashMatches == null) {
-          false
-        } else {
-          currentMatchPosition = 0
+        if (currentMatchPosition != -1 && currentMatchPosition < currentHashMatches.size) {
           true
+        } else {
+          currentHashMatches = null
+          currentMatchPosition = -1
+
+          while (currentHashMatches == null && streamIter.hasNext) {
+            currentStreamedRow = streamIter.next()
+            if (!joinKeys(currentStreamedRow).anyNull) {
+              currentHashMatches = hashedRelation.get(joinKeys.currentValue)
+            }
+          }
+
+          if (currentHashMatches == null) {
+            false
+          } else {
+            currentMatchPosition = 0
+            true
+          }
         }
       }
     }
