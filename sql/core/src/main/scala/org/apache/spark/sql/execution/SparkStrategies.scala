@@ -91,12 +91,17 @@ private[sql] abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
           makeBroadcastHashJoin(leftKeys, rightKeys, left, right, condition, joins.BuildLeft)
 
       // If the sort merge join option is set, we want to use sort merge join prior to hashjoin
-      // for now let's support inner join first, then add outer join
       case ExtractEquiJoinKeys(Inner, leftKeys, rightKeys, condition, left, right)
         if sqlContext.conf.sortMergeJoinEnabled =>
         val mergeJoin =
           joins.SortMergeJoin(leftKeys, rightKeys, planLater(left), planLater(right))
         condition.map(Filter(_, mergeJoin)).getOrElse(mergeJoin) :: Nil
+
+      // for outer join, we can not put conditions outside of the join
+      case ExtractEquiJoinKeys(joinType, leftKeys, rightKeys, condition, left, right)
+        if sqlContext.conf.sortMergeJoinEnabled =>
+        joins.SortMergeOuterJoin(
+          leftKeys, rightKeys, joinType, planLater(left), planLater(right), condition) :: Nil
 
       case ExtractEquiJoinKeys(Inner, leftKeys, rightKeys, condition, left, right) =>
         val buildSide =
