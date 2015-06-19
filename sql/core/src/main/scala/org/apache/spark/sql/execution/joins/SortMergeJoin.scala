@@ -41,7 +41,7 @@ case class SortMergeJoin(
     right: SparkPlan,
     condition: Option[Expression] = None) extends BinaryNode {
 
-  val (streamed, buffered, streamedKeys, bufferedKeys) = joinType match {
+  val (streamedPlan, bufferedPlan, streamedKeys, bufferedKeys) = joinType match {
     case RightOuter => (right, left, rightKeys, leftKeys)
     case _ => (left, right, leftKeys, rightKeys)
   }
@@ -62,8 +62,8 @@ case class SortMergeJoin(
   override def outputPartitioning: Partitioning = joinType match {
     case FullOuter =>
       // when doing Full Outer join, NULL rows from both sides are not so partitioned.
-      UnknownPartitioning(streamed.outputPartitioning.numPartitions)
-    case _ => streamed.outputPartitioning
+      UnknownPartitioning(streamedPlan.outputPartitioning.numPartitions)
+    case _ => streamedPlan.outputPartitioning
   }
 
   override def requiredChildDistribution: Seq[Distribution] =
@@ -80,26 +80,27 @@ case class SortMergeJoin(
   override def requiredChildOrdering: Seq[Seq[SortOrder]] =
     requiredOrders(leftKeys) :: requiredOrders(rightKeys) :: Nil
 
-  @transient protected lazy val streamedKeyGenerator = newProjection(streamedKeys, streamed.output)
-  @transient protected lazy val bufferedKeyGenerator = newProjection(bufferedKeys, buffered.output)
-
-  // standard null rows
-  @transient private[this] lazy val streamedNullRow = new GenericRow(streamed.output.length)
-  @transient private[this] lazy val bufferedNullRow = new GenericRow(buffered.output.length)
+  @transient protected lazy val streamedKeyGenerator =
+    newProjection(streamedKeys, streamedPlan.output)
+  @transient protected lazy val bufferedKeyGenerator =
+    newProjection(bufferedKeys, bufferedPlan.output)
 
   // checks if the joinedRow can meet condition requirements
   @transient private[this] lazy val boundCondition =
-    condition.map(
-      newPredicate(_, streamed.output ++ buffered.output)).getOrElse((row: InternalRow) => true)
+    condition.map(newPredicate(_, streamedPlan.output ++ bufferedPlan.output)).getOrElse(
+      (row: InternalRow) => true)
 
   private def requiredOrders(keys: Seq[Expression]): Seq[SortOrder] =
     keys.map(SortOrder(_, Ascending))
 
   protected override def doExecute(): RDD[InternalRow] = {
-    val streamResults = streamed.execute().map(_.copy())
-    val bufferResults = buffered.execute().map(_.copy())
+    val streamResults = streamedPlan.execute().map(_.copy())
+    val bufferResults = bufferedPlan.execute().map(_.copy())
 
-    streamResults.zipPartitions(bufferResults) { (streamedIter, bufferedIter) =>
+    streamResults.zipPartitions(bufferResults) ( (streamedIter, bufferedIter) => {
+      // standard null rows
+      val streamedNullRow = new GenericRow(streamedPlan.output.length)
+      val bufferedNullRow = new GenericRow(bufferedPlan.output.length)
       new Iterator[InternalRow] {
         // Mutable per row objects.
         private[this] val joinRow = new JoinedRow5
@@ -132,13 +133,13 @@ case class SortMergeJoin(
           if (hasNext) {
             if (bufferedMatches == null || bufferedMatches.size == 0) {
               // we just found a row with no join match and we are here to produce a row
-              // with this row with a standard null row from the other side.
+              // with this row and a standard null row from the other side.
               if (continueStreamed) {
-                val joinedRow = smartJoinRow(streamedElement, bufferedNullRow.copy())
+                val joinedRow = smartJoinRow(streamedElement, bufferedNullRow)
                 fetchStreamed()
                 joinedRow
               } else {
-                val joinedRow = smartJoinRow(streamedNullRow.copy(), bufferedElement)
+                val joinedRow = smartJoinRow(streamedNullRow, bufferedElement)
                 fetchBuffered()
                 joinedRow
               }
@@ -178,7 +179,7 @@ case class SortMergeJoin(
             case _ => joinRow(streamedRow, bufferedRow)
           }
 
-        private def fetchStreamed() = {
+        private def fetchStreamed(): Unit = {
           if (streamedIter.hasNext) {
             streamedElement = streamedIter.next()
             streamedKey = streamedKeyGenerator(streamedElement)
@@ -187,7 +188,7 @@ case class SortMergeJoin(
           }
         }
 
-        private def fetchBuffered() = {
+        private def fetchBuffered(): Unit = {
           if (bufferedIter.hasNext) {
             bufferedElement = bufferedIter.next()
             bufferedKey = bufferedKeyGenerator(bufferedElement)
@@ -207,6 +208,8 @@ case class SortMergeJoin(
          * When this is not a Inner join, we will also return true when we get a row with no match
          * on the other side. This search will jump out every time from the same position until
          * `next()` is called.
+         * Unless we call `next()`, this function can be called multiple times, with the same
+         * return value and result as running it once, since we have set guardians in it.
          *
          * @return true if the search is successful, and false if the right iterator runs out of
          *         tuples.
@@ -251,7 +254,7 @@ case class SortMergeJoin(
                 if (boundCondition(joinRow(streamedElement, bufferedElement))) {
                   bufferedMatches += bufferedElement
                 } else if (joinType == FullOuter) {
-                  bufferedMatches += bufferedNullRow.copy()
+                  bufferedMatches += bufferedNullRow
                   secondBufferedMatches += bufferedElement
                 }
                 fetchBuffered()
@@ -259,14 +262,14 @@ case class SortMergeJoin(
                   keyOrdering.compare(streamedKey, bufferedKey) != 0 || bufferedElement == null
               }
               if (bufferedMatches.size == 0 && joinType != Inner) {
-                bufferedMatches += bufferedNullRow.copy()
+                bufferedMatches += bufferedNullRow
               }
               if (bufferedMatches.size > 0) {
                 bufferedPosition = 0
                 matchKey = streamedKey
                 // secondBufferedMatches.size cannot be larger than bufferedMatches
                 if (secondBufferedMatches.size > 0) {
-                  secondStreamedElement = streamedNullRow.copy()
+                  secondStreamedElement = streamedNullRow
                 }
               }
             }
@@ -291,6 +294,6 @@ case class SortMergeJoin(
           bufferedMatches != null && bufferedMatches.size > 0
         }
       }
-    }
+    })
   }
 }
