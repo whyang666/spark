@@ -20,6 +20,7 @@ package org.apache.spark.sql
 import java.sql.{Timestamp, Date}
 import java.text.SimpleDateFormat
 
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.functions._
 
 class DateFunctionsSuite extends QueryTest {
@@ -184,4 +185,50 @@ class DateFunctionsSuite extends QueryTest {
       Row(15, 15, 15))
   }
 
+  test("function current_date") {
+    val df = Seq((1, 2), (3, 1)).toDF("a", "b")
+    val d0 = DateTimeUtils.millisToDays(System.currentTimeMillis())
+    val d1 = DateTimeUtils.fromJavaDate(df.select(current_date()).collect().head.getDate(0))
+    val d2 = DateTimeUtils.fromJavaDate(
+      ctx.sql("""SELECT CURRENT_DATE()""").collect().head.getDate(0))
+    val d3 = DateTimeUtils.millisToDays(System.currentTimeMillis())
+    assert(d0 <= d1 && d1 <= d2 && d2 <= d3 && d3 - d0 <= 1)
+  }
+
+  test("function current_timestamp") {
+    val df = Seq((1, 2), (3, 1)).toDF("a", "b")
+    checkAnswer(df.select(countDistinct(current_timestamp())), Row(1))
+    // TODO SPARK-9196: Execution in one query should return the same value
+    assert(math.abs(ctx.sql("""SELECT CURRENT_TIMESTAMP()""").collect().head.getTimestamp(
+      0).getTime - System.currentTimeMillis()) < 5000)
+  }
+
+  test("function to_date") {
+    val df = Seq(
+      (1, Timestamp.valueOf("2015-07-22 10:00:00")),
+      (2, Timestamp.valueOf("2014-12-31 23:59:59"))).toDF("i", "t")
+
+    checkAnswer(
+      df.select(to_date(col("t"))),
+      Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2014-12-31"))))
+
+    checkAnswer(
+      df.selectExpr("to_date(t)"),
+      Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2014-12-31"))))
+  }
+
+  test("function trunc") {
+    val df = Seq(
+      (1, Timestamp.valueOf("2015-07-22 10:00:00")),
+      (2, Timestamp.valueOf("2014-12-31 00:00:00"))).toDF("i", "t")
+
+    checkAnswer(
+      df.select(trunc(col("t"), lit("YY"))),
+      Seq(Row(Date.valueOf("2015-01-01")), Row(Date.valueOf("2014-01-01"))))
+
+
+    checkAnswer(
+      df.selectExpr("trunc(t, 'Month')"),
+      Seq(Row(Date.valueOf("2015-07-01")), Row(Date.valueOf("2014-12-01"))))
+  }
 }

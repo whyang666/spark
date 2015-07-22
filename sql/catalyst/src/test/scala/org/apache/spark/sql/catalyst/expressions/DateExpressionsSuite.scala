@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import org.apache.spark.SparkFunSuite
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.types.{StringType, TimestampType, DateType}
 
 class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
@@ -246,4 +247,45 @@ class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
     }
   }
 
+  test("datetime function current_date") {
+    val d0 = DateTimeUtils.millisToDays(System.currentTimeMillis())
+    val cd = CurrentDate().eval(EmptyRow).asInstanceOf[Int]
+    val d1 = DateTimeUtils.millisToDays(System.currentTimeMillis())
+    assert(d0 <= cd && cd <= d1 && d1 - d0 <= 1)
+  }
+
+  test("datetime function current_timestamp") {
+    val ct = DateTimeUtils.toJavaTimestamp(CurrentTimestamp().eval(EmptyRow).asInstanceOf[Long])
+    val t1 = System.currentTimeMillis()
+    assert(math.abs(t1 - ct.getTime) < 5000)
+  }
+
+  test("function to_date") {
+    checkResult(ToDate(Literal("2015-07-22")), ToDate(Literal("2015-07-22 23:59:59")))
+    checkResult(
+      ToDate(Literal("2015-07-22")), ToDate(Literal(Timestamp.valueOf("2015-07-22 23:59:59"))))
+    checkResult(ToDate(Literal("2015-07-22")), Date.valueOf("2015-07-22"))
+  }
+
+  test("function trunc") {
+    checkResult(
+      Trunc(Literal("2015-07-22"), Literal("YYYY")),
+      Trunc(Literal("2015-01-01 00:59:59"), Literal("YEAR")))
+    checkResult(
+      Trunc(Literal("2015-07-22"), Literal("Year")),
+      Trunc(Literal(Timestamp.valueOf("2015-12-31 23:59:59")), Literal("YY")))
+    checkResult(
+      Trunc(Literal("2015-07-22"), Literal("YY")), Date.valueOf("2015-01-01"))
+
+    checkResult(
+      Trunc(Literal("2015-07-22"), Literal("MONTH")),
+      Trunc(Literal("2015-07-01 00:59:59"), Literal("mm")))
+    checkResult(
+      Trunc(Literal("2015-07-22"), Literal("mon")),
+      Trunc(Literal(Timestamp.valueOf("2015-07-31 23:59:59")), Literal("MM")))
+    checkResult(
+      Trunc(Literal("2015-07-22"), Literal("YY")), Literal(Date.valueOf("2015-07-01")))
+
+    checkResult(Trunc(Literal("2015-07-22"), Literal("DD")), null)
+  }
 }

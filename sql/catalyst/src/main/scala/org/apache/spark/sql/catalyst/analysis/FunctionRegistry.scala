@@ -192,6 +192,8 @@ object FunctionRegistry {
     expression[Minute]("minute"),
     expression[Quarter]("quarter"),
     expression[Second]("second"),
+    expression[ToDate]("to_date"),
+    expression[Trunc]("trunc"),
     expression[WeekOfYear]("weekofyear"),
     expression[Year]("year")
 

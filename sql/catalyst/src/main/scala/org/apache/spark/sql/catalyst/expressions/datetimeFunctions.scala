@@ -258,3 +258,70 @@ case class DateFormatClass(left: Expression, right: Expression) extends BinaryEx
     })
   }
 }
+
+/**
+ * Returns the date part of a timestamp string.
+ */
+case class ToDate(child: Expression) extends UnaryExpression with ImplicitCastInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] = Seq(DateType)
+
+  override def dataType: DataType = DateType
+
+  override def eval(input: InternalRow): Any = {
+    child.eval(input).asInstanceOf[Int]
+  }
+
+  override def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String = {
+    nullSafeCodeGen(ctx, ev, (time) => {
+      time
+    })
+  }
+}
+
+/**
+ * Returns date truncated to the unit specified by the format.
+ */
+case class Trunc(date: Expression, format: Expression)
+  extends BinaryExpression with ImplicitCastInputTypes {
+  override def left: Expression = date
+  override def right: Expression = format
+
+  override def inputTypes: Seq[AbstractDataType] = Seq(DateType, StringType)
+  override def dataType: DataType = DateType
+
+  override def nullSafeEval(d: Any, fmt: Any): Any = {
+    val minItem = DateTimeUtils.getFmt(fmt.asInstanceOf[UTF8String].toUpperCase.toString)
+    if (minItem == -1) {
+      // unknown format
+      null
+    } else {
+      val days = d.asInstanceOf[Int]
+      val year = DateTimeUtils.getYear(days)
+      if (minItem == Calendar.YEAR) {
+        days - DateTimeUtils.getDayInYear(days) + 1
+      } else {
+        // trunc to MONTH
+        days - DateTimeUtils.getDayOfMonth(days) + 1
+      }
+    }
+  }
+
+  override def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String = {
+    nullSafeCodeGen(ctx, ev, (dateVal, fmt) => {
+      val dtu = DateTimeUtils.getClass.getName.stripSuffix("$")
+      val form = ctx.freshName("form")
+      s"""
+        $form = $dtu.getFmt($fmt);
+        if ($form == ${Calendar.YEAR}) {
+          ${ev.primitive} = $dateVal - $dtu.getDayInYear($dateVal) + 1;
+        } else if ($form == ${Calendar.MONTH}) {
+          ${ev.primitive} = $dateVal - $dtu.getDayInYear($dateVal) + 1;
+        } else {
+          ${ev.isNull} = true;
+        }
+      """
+    })
+  }
+
+}

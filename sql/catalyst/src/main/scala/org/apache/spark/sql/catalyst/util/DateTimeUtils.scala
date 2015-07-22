@@ -573,4 +573,10 @@ object DateTimeUtils {
       dayInYear - 334
     }
   }
+
+  def getFmt(dowString: String): Int = dowString match {
+    case "MON" | "MONTH" | "MM" => Calendar.MONTH
+    case "YEAR"| "YYYY" | "YY" => Calendar.YEAR
+    case _ => -1
+  }
 }
