@@ -330,3 +330,88 @@ case class NextDay(startDate: Expression, dayOfWeek: Expression)
 
   override def prettyName: String = "next_day"
 }
+
+/**
+ * Assumes given timestamp is UTC and converts to given timezone.
+ */
+case class FromUTCTimestamp(left: Expression, right: Expression)
+  extends BinaryExpression with ImplicitCastInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] = Seq(TimestampType, StringType)
+
+  override def dataType: DataType = TimestampType
+
+  override def nullSafeEval(time: Any, timezone: Any): Any = {
+    DateTimeUtils.fromUTCTime(time.asInstanceOf[Long], timezone.asInstanceOf[UTF8String])
+  }
+
+  override def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String = {
+    val dtu = DateTimeUtils.getClass.getName.stripSuffix("$")
+    defineCodeGen(ctx, ev, (timestamp, format) => {
+      s"""$dtu.fromUTCTime($timestamp, $format)"""
+    })
+  }
+}
+
+/**
+ * Assumes given timestamp is in given timezone and converts to UTC.
+ */
+case class ToUTCTimestamp(left: Expression, right: Expression)
+  extends BinaryExpression with ImplicitCastInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] = Seq(TimestampType, StringType)
+
+  override def dataType: DataType = TimestampType
+
+  override def nullSafeEval(time: Any, timezone: Any): Any = {
+    DateTimeUtils.toUTCTime(time.asInstanceOf[Long], timezone.asInstanceOf[UTF8String])
+  }
+
+  override def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String = {
+    val dtu = DateTimeUtils.getClass.getName.stripSuffix("$")
+    defineCodeGen(ctx, ev, (timestamp, format) => {
+      s"""$dtu.toUTCTime($timestamp, $format)"""
+    })
+  }
+}
+
+/**
+ * Returns the number of days from startdate to enddate. If input type is String, will be
+ * considered as UTC.
+ */
+case class DateDiff(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] = Seq(
+    TypeCollection(DateType, TimestampType, StringType),
+    TypeCollection(DateType, TimestampType, StringType))
+
+  override def dataType: DataType = IntegerType
+
+  override def nullSafeEval(l: Any, r: Any): Any = {
+    def getDate(v: Any, e: Expression): Int = e.dataType match {
+      case TimestampType =>
+        DateTimeUtils.millisToDays(v.asInstanceOf[Long] / 1000L)
+      case DateType =>
+        v.asInstanceOf[Int]
+      case StringType =>
+        DateTimeUtils.stringUTCToDays(v.asInstanceOf[UTF8String])
+    }
+    getDate(l, left) - getDate(r, right)
+  }
+
+  override def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String = {
+    val dtu = DateTimeUtils.getClass.getName.stripSuffix("$")
+    def genDate(v: String, dt: DataType): String = dt match {
+      case TimestampType =>
+        s"""$dtu.millisToDays($v / 1000L)"""
+      case DateType =>
+        s"""$v"""
+      case StringType =>
+        s"""$dtu.stringUTCToDays($v)"""
+    }
+    defineCodeGen(ctx, ev, (l, r) => {
+      s"""${genDate(l, left.dataType)} - ${genDate(r, right.dataType)}"""
+    })
+  }
+}

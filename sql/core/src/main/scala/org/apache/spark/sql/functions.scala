@@ -1949,6 +1949,14 @@ object functions {
     date_format(Column(dateColumnName), format)
 
   /**
+   * Returns the number of days from startdate to enddate. If input type is String, will be
+   * considered as UTC.
+   * @group datetime_funcs
+   * @since 1.5.0
+   */
+  def datediff(l: Column, r: Column): Column = DateDiff(l.expr, r.expr)
+
+  /**
    * Extracts the year as an integer from a given date/timestamp/string.
    * @group datetime_funcs
    * @since 1.5.0
@@ -2098,6 +2106,20 @@ object functions {
    * @since 1.5.0
    */
   def weekofyear(columnName: String): Column = weekofyear(Column(columnName))
+
+  /**
+   * Assumes given timestamp is UTC and converts to given timezone.
+   * @group datetime_funcs
+   * @since 1.5.0
+   */
+  def from_utc_timestamp(ts: Column, tz: Column): Column = FromUTCTimestamp(ts.expr, tz.expr)
+
+  /**
+   * Assumes given timestamp is in given timezone and converts to UTC.
+   * @group datetime_funcs
+   * @since 1.5.0
+   */
+  def to_utc_timestamp(ts: Column, tz: Column): Column = ToUTCTimestamp(ts.expr, tz.expr)
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   // Collection functions

@@ -207,10 +207,12 @@ object FunctionRegistry {
     // datetime functions
     expression[CurrentDate]("current_date"),
     expression[CurrentTimestamp]("current_timestamp"),
+    expression[DateDiff]("datediff"),
     expression[DateFormatClass]("date_format"),
     expression[DayOfMonth]("day"),
     expression[DayOfYear]("dayofyear"),
     expression[DayOfMonth]("dayofmonth"),
+    expression[FromUTCTimestamp]("from_utc_timestamp"),
     expression[Hour]("hour"),
     expression[LastDay]("last_day"),
     expression[Minute]("minute"),
@@ -218,6 +220,7 @@ object FunctionRegistry {
     expression[NextDay]("next_day"),
     expression[Quarter]("quarter"),
     expression[Second]("second"),
+    expression[ToUTCTimestamp]("to_utc_timestamp"),
     expression[WeekOfYear]("weekofyear"),
     expression[Year]("year"),
 

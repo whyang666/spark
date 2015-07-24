@@ -640,4 +640,32 @@ object DateTimeUtils {
     }
     date + (lastDayOfMonthInYear - dayInYear)
   }
+
+  def fromUTCTime(time: Long, timeZone: UTF8String): Long = {
+    val sdf = threadLocalTimestampFormat.get()
+    sdf.setTimeZone(defaultTimeZone)
+    val timeString = sdf.format(toJavaTimestamp(time))
+    sdf.setTimeZone(TimeZone.getTimeZone(timeZone.toString))
+    val millis = sdf.parse(timeString).getTime
+    // restore
+    sdf.setTimeZone(defaultTimeZone)
+    millis * 1000L
+  }
+
+  def toUTCTime(time: Long, timeZone: UTF8String): Long = {
+    val sdf = threadLocalTimestampFormat.get()
+    sdf.setTimeZone(TimeZone.getTimeZone(timeZone.toString))
+    val timeString = sdf.format(toJavaTimestamp(time))
+    sdf.setTimeZone(defaultTimeZone)
+    val millis = sdf.parse(timeString).getTime
+    millis * 1000L
+  }
+
+  def stringUTCToDays(s: UTF8String): Int = {
+    val sdf = threadLocalDateFormat.get()
+    sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
+    val millis = sdf.parse(s.toString).getTime
+    sdf.setTimeZone(defaultTimeZone)
+    millisToDays(millis)
+  }
 }
