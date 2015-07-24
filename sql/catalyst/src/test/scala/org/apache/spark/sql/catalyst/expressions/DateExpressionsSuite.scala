@@ -261,31 +261,20 @@ class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
   }
 
   test("function to_date") {
-    checkResult(ToDate(Literal("2015-07-22")), ToDate(Literal("2015-07-22 23:59:59")))
-    checkResult(
-      ToDate(Literal("2015-07-22")), ToDate(Literal(Timestamp.valueOf("2015-07-22 23:59:59"))))
-    checkResult(ToDate(Literal("2015-07-22")), Date.valueOf("2015-07-22"))
+    checkEvaluation(
+      ToDate(Literal(Date.valueOf("2015-07-22"))),
+      DateTimeUtils.fromJavaDate(Date.valueOf("2015-07-22")))
   }
 
   test("function trunc") {
-    checkResult(
-      Trunc(Literal("2015-07-22"), Literal("YYYY")),
-      Trunc(Literal("2015-01-01 00:59:59"), Literal("YEAR")))
-    checkResult(
-      Trunc(Literal("2015-07-22"), Literal("Year")),
-      Trunc(Literal(Timestamp.valueOf("2015-12-31 23:59:59")), Literal("YY")))
-    checkResult(
-      Trunc(Literal("2015-07-22"), Literal("YY")), Date.valueOf("2015-01-01"))
+    checkEvaluation(EqualTo(
+      Trunc(Literal(Date.valueOf("2015-07-22")), Literal("YYYY")),
+      Trunc(Literal(Date.valueOf("2015-01-01")), Literal("YEAR"))), true)
 
-    checkResult(
-      Trunc(Literal("2015-07-22"), Literal("MONTH")),
-      Trunc(Literal("2015-07-01 00:59:59"), Literal("mm")))
-    checkResult(
-      Trunc(Literal("2015-07-22"), Literal("mon")),
-      Trunc(Literal(Timestamp.valueOf("2015-07-31 23:59:59")), Literal("MM")))
-    checkResult(
-      Trunc(Literal("2015-07-22"), Literal("YY")), Literal(Date.valueOf("2015-07-01")))
+    checkEvaluation(EqualTo(
+      Trunc(Literal(Date.valueOf("2015-07-22")), Literal("MONTH")),
+      Trunc(Literal(Date.valueOf("2015-07-01")), Literal("mm"))), true)
 
-    checkResult(Trunc(Literal("2015-07-22"), Literal("DD")), null)
+    checkEvaluation(Trunc(Literal(Date.valueOf("2015-07-22")), Literal("DD")), null)
   }
 }

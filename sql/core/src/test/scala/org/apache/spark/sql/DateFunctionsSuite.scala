@@ -204,16 +204,32 @@ class DateFunctionsSuite extends QueryTest {
   }
 
   test("function to_date") {
-    val df = Seq(
-      (1, Timestamp.valueOf("2015-07-22 10:00:00")),
-      (2, Timestamp.valueOf("2014-12-31 23:59:59"))).toDF("i", "t")
+    val d1 = Date.valueOf("2015-07-22")
+    val d2 = Date.valueOf("2015-07-01")
+    val t1 = Timestamp.valueOf("2015-07-22 10:00:00")
+    val t2 = Timestamp.valueOf("2014-12-31 23:59:59")
+    val s1 = "2015-07-22 10:00:00"
+    val s2 = "2014-12-31"
+    val df = Seq((d1, t1, s1), (d2, t2, s2)).toDF("d", "t", "s")
 
     checkAnswer(
       df.select(to_date(col("t"))),
       Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2014-12-31"))))
+    checkAnswer(
+      df.select(to_date(col("d"))),
+      Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2015-07-01"))))
+    checkAnswer(
+      df.select(to_date(col("s"))),
+      Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2014-12-31"))))
 
     checkAnswer(
       df.selectExpr("to_date(t)"),
+      Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2014-12-31"))))
+    checkAnswer(
+      df.selectExpr("to_date(d)"),
+      Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2015-07-01"))))
+    checkAnswer(
+      df.selectExpr("to_date(s)"),
       Seq(Row(Date.valueOf("2015-07-22")), Row(Date.valueOf("2014-12-31"))))
   }
 

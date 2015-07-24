@@ -574,9 +574,16 @@ object DateTimeUtils {
     }
   }
 
-  def getFmt(dowString: String): Int = dowString match {
-    case "MON" | "MONTH" | "MM" => Calendar.MONTH
-    case "YEAR"| "YYYY" | "YY" => Calendar.YEAR
-    case _ => -1
+  /**
+   * Returns the truncate level, could be [[Calendar.MONTH]]/[[Calendar.YEAR]]/-1
+   * -1 means unsupported truncate level.
+   */
+  def getFmt(string: UTF8String): Int = {
+    val fmtString = string.toString.toUpperCase
+    fmtString match {
+      case "MON" | "MONTH" | "MM" => Calendar.MONTH
+      case "YEAR"| "YYYY" | "YY" => Calendar.YEAR
+      case _ => -1
+    }
   }
 }
