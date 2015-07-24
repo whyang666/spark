@@ -661,11 +661,11 @@ object DateTimeUtils {
     millis * 1000L
   }
 
-  def stringUTCToDays(s: UTF8String): Int = {
+  def stringUTCToMillis(s: UTF8String): Long = {
     val sdf = threadLocalDateFormat.get()
     sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
     val millis = sdf.parse(s.toString).getTime
     sdf.setTimeZone(defaultTimeZone)
-    millisToDays(millis)
+    millis
   }
 }

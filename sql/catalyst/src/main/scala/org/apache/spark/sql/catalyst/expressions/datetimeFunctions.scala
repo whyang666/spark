@@ -389,29 +389,30 @@ case class DateDiff(left: Expression, right: Expression)
   override def dataType: DataType = IntegerType
 
   override def nullSafeEval(l: Any, r: Any): Any = {
-    def getDate(v: Any, e: Expression): Int = e.dataType match {
+    def getMillis(v: Any, e: Expression): Long = e.dataType match {
       case TimestampType =>
-        DateTimeUtils.millisToDays(v.asInstanceOf[Long] / 1000L)
+        v.asInstanceOf[Long] / 1000L
       case DateType =>
-        v.asInstanceOf[Int]
+        DateTimeUtils.daysToMillis(v.asInstanceOf[Int])
       case StringType =>
-        DateTimeUtils.stringUTCToDays(v.asInstanceOf[UTF8String])
+        DateTimeUtils.stringUTCToMillis(v.asInstanceOf[UTF8String])
     }
-    getDate(l, left) - getDate(r, right)
+    ((getMillis(l, left) - getMillis(r, right)) / DateTimeUtils.MILLIS_PER_DAY).toInt
   }
 
   override def genCode(ctx: CodeGenContext, ev: GeneratedExpressionCode): String = {
     val dtu = DateTimeUtils.getClass.getName.stripSuffix("$")
-    def genDate(v: String, dt: DataType): String = dt match {
+    def genMillis(v: String, dt: DataType): String = dt match {
       case TimestampType =>
-        s"""$dtu.millisToDays($v / 1000L)"""
+        s"""$v / 1000L"""
       case DateType =>
-        s"""$v"""
+        s"""$dtu.daysToMillis($v)"""
       case StringType =>
-        s"""$dtu.stringUTCToDays($v)"""
+        s"""$dtu.stringUTCToMillis($v)"""
     }
     defineCodeGen(ctx, ev, (l, r) => {
-      s"""${genDate(l, left.dataType)} - ${genDate(r, right.dataType)}"""
+      s"""(int) ((${genMillis(l, left.dataType)} -
+        ${genMillis(r, right.dataType)}) / $dtu.MILLIS_PER_DAY())""".stripMargin
     })
   }
 }

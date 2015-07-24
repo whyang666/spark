@@ -231,8 +231,8 @@ class DateFunctionsSuite extends QueryTest {
   test("datediff") {
     val df = Seq((
       Date.valueOf("2015-07-24"), Timestamp.valueOf("2015-07-24 00:00:00"),
-      "2015-07-24", "2015-07-24 00:00:00"), (Date.valueOf("2015-07-25"),
-      Timestamp.valueOf("2015-07-25 00:00:00"), "2015-07-25", "2015-07-25 00:00:00")
+      "2015-07-23", "2015-07-23 00:00:00"), (Date.valueOf("2015-07-25"),
+      Timestamp.valueOf("2015-07-25 00:00:00"), "2015-07-24", "2015-07-24 00:00:00")
     ).toDF("a", "b", "c", "d")
     checkAnswer(df.select(datediff(col("a"), col("b"))), Seq(Row(0), Row(0)))
     checkAnswer(df.select(datediff(col("a"), col("c"))), Seq(Row(1), Row(1)))

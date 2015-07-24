@@ -307,14 +307,14 @@ class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
   test("datediff") {
     checkEvaluation(DateDiff(
       Literal(Timestamp.valueOf("2015-07-21 23:59:59")),
-      Literal(Timestamp.valueOf("2015-07-24 00:00:00"))), -3)
+      Literal(Timestamp.valueOf("2015-07-24 00:00:00"))), -2)
     checkEvaluation(
       DateDiff(Literal(Date.valueOf("2015-07-24")), Literal(Date.valueOf("2015-07-21"))), 3)
     checkEvaluation(DateDiff(Literal("2015-07-24"), Literal("2015-07-21")), 3)
-    checkEvaluation(DateDiff(Literal(Date.valueOf("2015-07-24")), Literal("2015-07-21")), 4)
+    checkEvaluation(DateDiff(Literal(Date.valueOf("2015-07-24")), Literal("2015-07-21")), 3)
     checkEvaluation(DateDiff(Literal("2015-07-24"), Literal(Date.valueOf("2015-07-21"))), 2)
     checkEvaluation(
-      DateDiff(Literal(Timestamp.valueOf("2015-07-24 07:59:59")), Literal("2015-07-21")), 4)
+      DateDiff(Literal(Timestamp.valueOf("2015-07-24 07:59:59")), Literal("2015-07-21")), 3)
     checkEvaluation(
       DateDiff(Literal("2015-07-24 07:59:59"), Literal(Date.valueOf("2015-07-21"))), 2)
     checkEvaluation(DateDiff(
