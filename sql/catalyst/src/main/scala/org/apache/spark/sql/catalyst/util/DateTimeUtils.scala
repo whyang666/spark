@@ -641,6 +641,10 @@ object DateTimeUtils {
     date + (lastDayOfMonthInYear - dayInYear)
   }
 
+  /**
+   * Returns a timestamp of given timezone from utc timestamp, with the same string
+   * representation in their timezone.
+   */
   def fromUTCTime(time: Long, timeZone: UTF8String): Long = {
     val sdf = threadLocalTimestampFormat.get()
     sdf.setTimeZone(defaultTimeZone)
@@ -652,6 +656,10 @@ object DateTimeUtils {
     millis * 1000L
   }
 
+  /**
+   * Returns a utc timestamp from a given timestamp from a given timezone, with the same
+   * string representation in their timezone.
+   */
   def toUTCTime(time: Long, timeZone: UTF8String): Long = {
     val sdf = threadLocalTimestampFormat.get()
     sdf.setTimeZone(TimeZone.getTimeZone(timeZone.toString))

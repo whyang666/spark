@@ -361,4 +361,16 @@ class DateTimeUtilsSuite extends SparkFunSuite {
     c.set(2012, 11, 24, 0, 0, 0)
     assert(DateTimeUtils.getDayOfMonth(getInUTCDays(c.getTimeInMillis)) === 24)
   }
+
+  test("from UTC timestamp") {
+    assert(DateTimeUtils.fromUTCTime(0, UTF8String.fromString("UTC")) == -28800000000L)
+    assert(DateTimeUtils.fromUTCTime(0, UTF8String.fromString("PST")) == 0)
+    assert(DateTimeUtils.fromUTCTime(0, UTF8String.fromString("Asia/Shanghai")) == -57600000000L)
+  }
+
+  test("to UTC timestamp") {
+    assert(DateTimeUtils.toUTCTime(0, UTF8String.fromString("UTC")) == 28800000000L)
+    assert(DateTimeUtils.toUTCTime(0, UTF8String.fromString("PST")) == 0)
+    assert(DateTimeUtils.toUTCTime(0, UTF8String.fromString("Asia/Shanghai")) == 57600000000L)
+  }
 }

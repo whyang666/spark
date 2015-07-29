@@ -2112,14 +2112,15 @@ object functions {
    * @group datetime_funcs
    * @since 1.5.0
    */
-  def from_utc_timestamp(ts: Column, tz: Column): Column = FromUTCTimestamp(ts.expr, tz.expr)
+  def from_utc_timestamp(ts: Column, tz: String): Column =
+    FromUTCTimestamp(ts.expr, Literal(tz).expr)
 
   /**
    * Assumes given timestamp is in given timezone and converts to UTC.
    * @group datetime_funcs
    * @since 1.5.0
    */
-  def to_utc_timestamp(ts: Column, tz: Column): Column = ToUTCTimestamp(ts.expr, tz.expr)
+  def to_utc_timestamp(ts: Column, tz: String): Column = ToUTCTimestamp(ts.expr, Literal(tz).expr)
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   // Collection functions

@@ -249,47 +249,47 @@ class DateFunctionsSuite extends QueryTest {
       (Timestamp.valueOf("2015-07-25 00:00:00"), "2015-07-25 00:00:00", ms2)
     ).toDF("a", "b", "c")
     checkAnswer(
-      df.select(from_utc_timestamp(col("a"), lit("UTC"))),
+      df.select(from_utc_timestamp(col("a"), "UTC")),
       Seq(
         Row(Timestamp.valueOf("2015-07-23 17:00:00")),
         Row(Timestamp.valueOf("2015-07-24 17:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("b"), lit("UTC"))),
+      df.select(from_utc_timestamp(col("b"), "UTC")),
       Seq(
         Row(Timestamp.valueOf("2015-07-23 17:00:00")),
         Row(Timestamp.valueOf("2015-07-24 17:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("c"), lit("UTC"))),
+      df.select(from_utc_timestamp(col("c"), "UTC")),
       Seq(
         Row(Timestamp.valueOf("2015-07-23 17:00:00")),
         Row(Timestamp.valueOf("2015-07-24 17:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("a"), lit("PST"))),
+      df.select(from_utc_timestamp(col("a"), "PST")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 00:00:00")),
         Row(Timestamp.valueOf("2015-07-25 00:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("b"), lit("PST"))),
+      df.select(from_utc_timestamp(col("b"), "PST")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 00:00:00")),
         Row(Timestamp.valueOf("2015-07-25 00:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("c"), lit("PST"))),
+      df.select(from_utc_timestamp(col("c"), "PST")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 00:00:00")),
         Row(Timestamp.valueOf("2015-07-25 00:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("a"), lit("Asia/Shanghai"))),
+      df.select(from_utc_timestamp(col("a"), "Asia/Shanghai")),
       Seq(
         Row(Timestamp.valueOf("2015-07-23 09:00:00")),
         Row(Timestamp.valueOf("2015-07-24 09:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("b"), lit("Asia/Shanghai"))),
+      df.select(from_utc_timestamp(col("b"), "Asia/Shanghai")),
       Seq(
         Row(Timestamp.valueOf("2015-07-23 09:00:00")),
         Row(Timestamp.valueOf("2015-07-24 09:00:00"))))
     checkAnswer(
-      df.select(from_utc_timestamp(col("c"), lit("Asia/Shanghai"))),
+      df.select(from_utc_timestamp(col("c"), "Asia/Shanghai")),
       Seq(
         Row(Timestamp.valueOf("2015-07-23 09:00:00")),
         Row(Timestamp.valueOf("2015-07-24 09:00:00"))))
@@ -305,47 +305,47 @@ class DateFunctionsSuite extends QueryTest {
       (Timestamp.valueOf("2015-07-25 00:00:00"), "2015-07-25 00:00:00", ms2)
     ).toDF("a", "b", "c")
     checkAnswer(
-      df.select(to_utc_timestamp(col("a"), lit("UTC"))),
+      df.select(to_utc_timestamp(col("a"), "UTC")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 07:00:00")),
         Row(Timestamp.valueOf("2015-07-25 07:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("b"), lit("UTC"))),
+      df.select(to_utc_timestamp(col("b"), "UTC")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 07:00:00")),
         Row(Timestamp.valueOf("2015-07-25 07:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("c"), lit("UTC"))),
+      df.select(to_utc_timestamp(col("c"), "UTC")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 07:00:00")),
         Row(Timestamp.valueOf("2015-07-25 07:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("a"), lit("PST"))),
+      df.select(to_utc_timestamp(col("a"), "PST")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 00:00:00")),
         Row(Timestamp.valueOf("2015-07-25 00:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("b"), lit("PST"))),
+      df.select(to_utc_timestamp(col("b"), "PST")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 00:00:00")),
         Row(Timestamp.valueOf("2015-07-25 00:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("c"), lit("PST"))),
+      df.select(to_utc_timestamp(col("c"), "PST")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 00:00:00")),
         Row(Timestamp.valueOf("2015-07-25 00:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("a"), lit("Asia/Shanghai"))),
+      df.select(to_utc_timestamp(col("a"), "Asia/Shanghai")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 15:00:00")),
         Row(Timestamp.valueOf("2015-07-25 15:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("b"), lit("Asia/Shanghai"))),
+      df.select(to_utc_timestamp(col("b"), "Asia/Shanghai")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 15:00:00")),
         Row(Timestamp.valueOf("2015-07-25 15:00:00"))))
     checkAnswer(
-      df.select(to_utc_timestamp(col("c"), lit("Asia/Shanghai"))),
+      df.select(to_utc_timestamp(col("c"), "Asia/Shanghai")),
       Seq(
         Row(Timestamp.valueOf("2015-07-24 15:00:00")),
         Row(Timestamp.valueOf("2015-07-25 15:00:00"))))
